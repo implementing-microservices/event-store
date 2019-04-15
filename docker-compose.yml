@@ -1,0 +1,42 @@
+version: "3.4"
+
+services:
+  ms-event-store:
+    container_name: ms-event-store
+    build:
+      context: .
+    volumes:
+      - ./:/app
+    ports:
+      - 8181:8000
+    env_file:
+      - ./database-dev.env
+    environment:
+      FLASK_ENV: development
+    links:
+      - ms-events-db
+    command: ./wait-for.sh -t 60 ms-events-db:8000 -- gunicorn -b 0.0.0.0 --reload -w 4 server:app
+
+  # https://hub.docker.com/r/amazon/dynamodb-local/ 
+  # Test the database from host:   
+  # > aws dynamodb list-tables --endpoint-url http://localhost:8248
+  ms-events-db:
+    container_name: ms-events-db
+    image: amazon/dynamodb-local
+    expose:
+      - 8000
+    ports: # for debugging only. Nor necessary
+      - 8248:8000
+    environment:
+      - ./Djava.library.path=./DynamoDBLocal_lib
+    volumes:
+      - ms_events_db_data:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+    # note: data folder gets created as "root" so dynamodblocal can't use it
+    # if you need to mount it to a volume, you need to run as root
+    user: root
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
+    restart: always
+
+volumes:
+  ms_events_db_data:

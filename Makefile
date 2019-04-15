@@ -21,10 +21,23 @@ ps:
 logs:
 	docker-compose logs -f
 
+.PHONY: logs-db
+logs-db:
+	docker-compose logs -f ms-events-db
+
+.PHONY: logs-app
+logs-app:
+	docker-compose logs -f ms-event-store
+
+# requires: brew install awscli
+.PHONY: list-tables
+list-tables:
+	aws dynamodb list-tables --endpoint-url http://localhost:8248
+
 # requires: Node installation && npm install -g redoc-cli
 .PHONY: docs
 docs:
-	redoc-cli bundle -o docs/index.html specs/api.yml
+	redoc-cli bundle -ssr -o docs/index.html specs/api.yml
 # Also requires spectacle and docs are served at: http://localhost:4400/
 .PHONY: docs-serve
 docs-serve:
