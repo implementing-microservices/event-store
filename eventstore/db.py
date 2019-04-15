@@ -13,11 +13,12 @@ import json
 def get_db():
   hostname = os.environ['DYNAMO_HOST'] if "DYNAMO_HOST" in os.environ else "0.0.0.0"
   port = os.environ['DYNAMO_PORT'] if "DYNAMO_PORT" in os.environ else 8248
+  region = os.environ['DYNAMO_REGION'] if "DYNAMO_REGION" in os.environ else "us-east-1"
 
   db_url = f"http://{hostname}:{port}"
 
   try:
-      db_conn = boto3.resource('dynamodb', endpoint_url=db_url)
+      db_conn = boto3.resource('dynamodb', endpoint_url=db_url, region_name = region)
   except Exception as e:
       log.error("Error connecting to DynamoDB:")
       log.error(e)

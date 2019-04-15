@@ -8,14 +8,14 @@ services:
     volumes:
       - ./:/app
     ports:
-      - 8181:8000
+      - 8181:5000
     env_file:
       - ./database-dev.env
     environment:
       FLASK_ENV: development
     links:
       - ms-events-db
-    command: ./wait-for.sh -t 60 ms-events-db:8000 -- gunicorn -b 0.0.0.0 --reload -w 4 server:app
+    command: ./wait-for.sh -t 60 ms-events-db:8000 -- python server.py
 
   # https://hub.docker.com/r/amazon/dynamodb-local/ 
   # Test the database from host:   
