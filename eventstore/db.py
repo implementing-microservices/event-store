@@ -8,17 +8,18 @@ import sys
 import logging as log
 import json
 
+# AWS endpoint_url='http://dynamodb.us-east-1.amazonaws.com' 
+dynamo_url = os.environ['DYNAMO_URL'] \
+    if "DYNAMO_URL" in os.environ else "http://0.0.0.0:8248"
+dynamo_region = os.environ['DYNAMO_REGION'] \
+    if "DYNAMO_REGION" in os.environ else "us-east-1"
 
 # see: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html
 def get_db():
-  hostname = os.environ['DYNAMO_HOST'] if "DYNAMO_HOST" in os.environ else "0.0.0.0"
-  port = os.environ['DYNAMO_PORT'] if "DYNAMO_PORT" in os.environ else 8248
-  region = os.environ['DYNAMO_REGION'] if "DYNAMO_REGION" in os.environ else "us-east-1"
-
-  db_url = f"http://{hostname}:{port}"
 
   try:
-      db_conn = boto3.resource('dynamodb', endpoint_url=db_url, region_name = region)
+      db_conn = boto3.resource('dynamodb', \
+          endpoint_url=dynamo_url, region_name = dynamo_region)
   except Exception as e:
       log.error("Error connecting to DynamoDB:")
       log.error(e)
