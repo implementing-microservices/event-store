@@ -1,4 +1,6 @@
-Flask==1.0.2
-boto3>=1.9
+sanic>=18.12.0
+aioboto3>=6.2.2
+asyncio>=3.4.3
+# boto3>=1.9
 gunicorn==19.9.0
 pylint==2.3.1
