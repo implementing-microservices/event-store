@@ -11,7 +11,7 @@ import json
 import asyncio
 import aioboto3
 
-# AWS endpoint_url='http://s3.amazonaws.com' 
+# AWS endpoint_url='http://dynamodb.us-east-1.amazonaws.com' 
 dynamo_url = os.environ['DYNAMO_URL'] \
     if "DYNAMO_URL" in os.environ else "http://0.0.0.0:8248"
 dynamo_region = os.environ['DYNAMO_REGION'] \
