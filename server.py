@@ -27,10 +27,7 @@ async def get_events(request, event_type):
     since = request.args.get('since', '')
     count = request.args.get('count', 10)
 
-    log.info (f"event type: {event_type}")
-    log.info(f"since: {since}")
-    log.info(f"count: {count}")
-    resp = await handlers.get_events('kukuu', since, count)
+    resp = await handlers.get_events(event_type, since, count)
     return response.json(resp)
     # return resp
 
