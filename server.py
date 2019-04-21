@@ -4,39 +4,34 @@ import logging as log
 import uuid
 import json
 import decimal
-
-from flask import Flask, request, jsonify, Response
 from decimal import Decimal
+
+from sanic import Sanic
+from sanic import response
+from sanic.request import RequestParameters
+
+app = Sanic()
 
 from eventstore import handlers, db
 
-app = Flask(__name__)
-
-
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, decimal.Decimal):
-            return str(obj)
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
-
 # @see: https://implementing-microservices.github.io/event-store/
 @app.route('/events/<event_type>', methods=['POST'])
-def save_events(event_type):
-    # Note 'force=True' ignores mime-type=app/json requirement default in Flask
-    events = request.get_json(force=True)
+async def save_events(request, event_type):
+    events = request.json
 
-    resp = handlers.save_events(event_type, events)
-    return jsonify(resp)
+    resp = await handlers.save_events(event_type, events)
+    return response.json(resp)
 
 @app.route('/events/<event_type>', methods=['GET'])
-def get_events(event_type):
+async def get_events(request, event_type):
     since = request.args.get('since', '')
     count = request.args.get('count', 10)
 
-    resp = handlers.get_events(event_type, since, count)
-    resp = json.dumps(resp, cls=DecimalEncoder)
-    return Response(resp, mimetype='application/json')
+    log.info (f"event type: {event_type}")
+    log.info(f"since: {since}")
+    log.info(f"count: {count}")
+    resp = await handlers.get_events('kukuu', since, count)
+    return response.json(resp)
     # return resp
 
 def init():
@@ -44,6 +39,6 @@ def init():
     db.init_db()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(host="0.0.0.0", port=5000)

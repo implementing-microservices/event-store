@@ -8,17 +8,22 @@ import sys
 import logging as log
 import json
 
+import asyncio
+import aioboto3
+
+# AWS endpoint_url='http://s3.amazonaws.com' 
+dynamo_url = os.environ['DYNAMO_URL'] \
+    if "DYNAMO_URL" in os.environ else "http://0.0.0.0:8248"
+dynamo_region = os.environ['DYNAMO_REGION'] \
+    if "DYNAMO_REGION" in os.environ else "us-east-1"
 
 # see: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html
 def get_db():
-  hostname = os.environ['DYNAMO_HOST'] if "DYNAMO_HOST" in os.environ else "0.0.0.0"
-  port = os.environ['DYNAMO_PORT'] if "DYNAMO_PORT" in os.environ else 8248
-  region = os.environ['DYNAMO_REGION'] if "DYNAMO_REGION" in os.environ else "us-east-1"
 
-  db_url = f"http://{hostname}:{port}"
-
+  # https://docs.python.org/3/reference/compound_stmts.html#async-with
   try:
-      db_conn = boto3.resource('dynamodb', endpoint_url=db_url, region_name = region)
+      db_conn = boto3.resource('dynamodb', \
+          endpoint_url=dynamo_url, region_name = dynamo_region)
   except Exception as e:
       log.error("Error connecting to DynamoDB:")
       log.error(e)
@@ -26,19 +31,18 @@ def get_db():
 
   return db_conn
 
-  # table = db_conn.Table('events')
+async def get_events(event_type, event_id, count = 10):
+  async with aioboto3.resource('dynamodb', \
+          endpoint_url=dynamo_url, region_name = dynamo_region) as conn:
 
-def get_events(event_type, event_id, count = 10):
-  conn = get_db()
-  table = conn.Table('events')
-  response = table.query(
-    # ProjectionExpression="#yr, title, info.genres, info.actors[0]",
-    IndexName="EventTypeIndex",
-    KeyConditionExpression=Key('eventType').eq(event_type) & Key('eventId').gte(event_id)
-  )
-  return response[u'Items']
+    table = conn.Table('events')
+    response = await table.query(
+        IndexName="EventTypeIndex",
+        KeyConditionExpression=Key('eventType').eq(event_type) & Key('eventId').gte(event_id)
+    )
+    return response[u'Items']
 
-def save_events(event_type, events):
+async def save_events(event_type, events):
   # List comprehension that works in Python 3.5+
   dbevents = [{**e, 'eventType': event_type} for e in events]
 
@@ -47,12 +51,14 @@ def save_events(event_type, events):
   dumped = json.dumps(dbevents)
   dbevents = json.loads(dumped, parse_float=Decimal)
 
-  conn = get_db()
-  table = conn.Table('events')
-  with table.batch_writer() as batch:
-    log.info(dbevents)
-    for event in dbevents:
-      batch.put_item(Item=event)
+  async with aioboto3.resource('dynamodb', \
+        endpoint_url=dynamo_url, region_name = dynamo_region) as conn:
+
+    table = conn.Table('events')
+    async with table.batch_writer() as batch:
+        # log.info(dbevents)
+        for event in dbevents:
+            await batch.put_item(Item=event)
 
 
 def init_db():
