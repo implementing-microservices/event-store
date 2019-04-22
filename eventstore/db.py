@@ -49,7 +49,7 @@ async def save_events(event_type, events):
   # Fixing Boto's silly problem with floats:
   # https://github.com/boto/boto3/issues/665#issuecomment-453198154
   dumped = json.dumps(dbevents)
-  dbevents = json.loads(dumped, parse_float=Decimal)
+  dbevents = json.loads(dumped, parse_float=str)
 
   async with aioboto3.resource('dynamodb', \
         endpoint_url=dynamo_url, region_name = dynamo_region) as conn:

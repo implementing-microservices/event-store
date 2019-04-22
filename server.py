@@ -1,16 +1,12 @@
-import boto3
 import os
 import logging as log
 import uuid
 import json
 import decimal
-from decimal import Decimal
 
 from quart import Quart, request, jsonify, Response
 
 app = Quart(__name__)
-
-from eventstore import handlers, db
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,11 +15,14 @@ class DecimalEncoder(json.JSONEncoder):
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
+app.json_encoder = DecimalEncoder
+
+from eventstore import handlers, db
+
 # @see: https://implementing-microservices.github.io/event-store/
 @app.route('/events/<event_type>', methods=['POST'])
 async def save_events(event_type):
-    events = request.get_json(force=True)
-
+    events = await request.get_json(force=True)
     resp = await handlers.save_events(event_type, events)
     return jsonify(resp)
 
@@ -34,7 +33,7 @@ async def get_events(event_type):
 
     resp = await handlers.get_events(event_type, since, count)
     return jsonify(resp)
-    # return resp
+   
 
 def init():
     uuid.uuid1() # prime the uuid generator at startup

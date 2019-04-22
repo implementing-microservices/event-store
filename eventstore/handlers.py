@@ -6,6 +6,8 @@ from . import db
 async def get_events(event_type, since, count):
 
   events = await db.get_events(event_type, since)
+  log.info("aaaaaa")
+  log.info(events)
   return events
 
 async def save_events(event_type, events):
